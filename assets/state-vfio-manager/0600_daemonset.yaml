@@ -65,7 +65,7 @@ spec:
           lifecycle:
             preStop:
               exec:
-                command: ["/bin/bash", "-c", "vfio-manage unbind --all-to-nvidia true"]
+                command: ["/bin/bash", "-c", "driver-manager switch_driver --restore > /proc/1/fd/1"]
       terminationGracePeriodSeconds: 30
       volumes:
         - name: nvidia-vfio-manager

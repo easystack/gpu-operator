@@ -18,7 +18,7 @@ ARG CUDA_VERSION=undefined
 ARG BASE_DIST=ubi8
 ARG GOLANG_VERSION=x.x.x
 
-FROM ${CUDA_IMAGE}:${CUDA_VERSION}-base-${BASE_DIST} as builder
+FROM ${CUDA_IMAGE}:${CUDA_VERSION}-base-${BASE_DIST} AS builder
 
 RUN yum install -y wget make git gcc
 
@@ -35,8 +35,8 @@ RUN set -eux; \
     wget -nv -O - http://fs.easystack.cn/go/go${GOLANG_VERSION}.linux-${ARCH}.tar.gz \
     | tar -C /usr/local -xz
 
-ENV GOPATH /go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+ENV GOPATH=/go
+ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
