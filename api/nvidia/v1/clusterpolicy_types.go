@@ -159,6 +159,9 @@ type HostPathsSpec struct {
 	// DriverInstallDir represents the root at which driver files including libraries,
 	// config files, and executables can be found.
 	DriverInstallDir string `json:"driverInstallDir,omitempty"`
+
+	// +kubebuilder:default=/var/lib/kubelet
+	KubeletRoot string `json:"kubeletRoot,omitempty"`
 }
 
 // EnvVar represents an environment variable present in a Container.
@@ -191,8 +194,8 @@ type SandboxWorkloadsSpec struct {
 	Enabled *bool `json:"enabled,omitempty"`
 	// DefaultWorkload indicates the default GPU workload type to configure
 	// worker nodes in the cluster for
-	// +kubebuilder:validation:Enum=container;vm-passthrough;vm-vgpu
-	// +kubebuilder:default=container
+	// +kubebuilder:validation:Enum=none;container;vm-passthrough;vm-vgpu
+	// +kubebuilder:default=none
 	DefaultWorkload string `json:"defaultWorkload,omitempty"`
 }
 

@@ -22,47 +22,27 @@ spec:
         nvidia.com/gpu.deploy.vfio-manager: "true"
       priorityClassName: system-node-critical
       serviceAccountName: nvidia-vfio-manager
-      initContainers:
-        - name: k8s-driver-manager
-          image: "FILLED BY THE OPERATOR"
-          imagePullPolicy: IfNotPresent
-          command: ["driver-manager"]
-          args: ["uninstall_driver"]
-          env:
-          - name: NODE_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
-          # always use runc for driver containers
-          - name: NVIDIA_VISIBLE_DEVICES
-            value: void
-          - name: ENABLE_GPU_POD_EVICTION
-            value: "false"
-          - name: ENABLE_AUTO_DRAIN
-            value: "false"
-          - name: OPERATOR_NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: run-nvidia
-              mountPath: /run/nvidia
-              mountPropagation: Bidirectional
-            - name: host-root
-              mountPath: /host
-              readOnly: true
-              mountPropagation: HostToContainer
-            - name: host-sys
-              mountPath: /sys
       containers:
         - name: nvidia-vfio-manager
           image: "FILLED BY THE OPERATOR"
           imagePullPolicy: IfNotPresent
           command: ["/bin/bash", "-c"]
           args:
-            - /bin/vfio-manage.sh bind --all && sleep inf
+            - driver-manager switch_driver && sleep inf
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            # always use runc for driver containers
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: void
+            - name: ENABLE_GPU_POD_EVICTION
+              value: "true"
+            - name: OPERATOR_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
           resources:
             limits:
               memory: 200Mi
@@ -85,7 +65,7 @@ spec:
           lifecycle:
             preStop:
               exec:
-                command: ["/bin/sh", "-c", "/bin/vfio-manage.sh unbind --all"]
+                command: ["/bin/bash", "-c", "driver-manager switch_driver --restore > /proc/1/fd/1"]
       terminationGracePeriodSeconds: 30
       volumes:
         - name: nvidia-vfio-manager

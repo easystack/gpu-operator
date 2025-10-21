@@ -1202,6 +1202,9 @@ spec:
                       DriverInstallDir represents the root at which driver files including libraries,
                       config files, and executables can be found.
                     type: string
+                  kubeletRoot:
+                    default: /var/lib/kubelet
+                    type: string
                   rootFS:
                     description: |-
                       RootFS represents the path to the root filesystem of the host.
@@ -1685,11 +1688,12 @@ spec:
                   workloads (i.e. Virtual Machines)
                 properties:
                   defaultWorkload:
-                    default: container
+                    default: none
                     description: |-
                       DefaultWorkload indicates the default GPU workload type to configure
                       worker nodes in the cluster for
                     enum:
+                    - none
                     - container
                     - vm-passthrough
                     - vm-vgpu

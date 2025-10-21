@@ -15,7 +15,7 @@
 ARG CUDA_SAMPLE_IMAGE=undefined
 ARG GOLANG_VERSION=x.x.x
 
-FROM nvcr.io/nvidia/cuda:13.0.1-base-ubi9 as build
+FROM nvcr.io/nvidia/cuda:13.0.1-base-ubi9 AS build
 
 RUN dnf install -y wget make git gcc
 
@@ -32,8 +32,8 @@ RUN set -eux; \
     wget -nv -O - https://storage.googleapis.com/golang/go${GOLANG_VERSION}.linux-${ARCH}.tar.gz \
     | tar -C /usr/local -xz
 
-ENV GOPATH /go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+ENV GOPATH=/go
+ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
 
 WORKDIR /build
 COPY . .

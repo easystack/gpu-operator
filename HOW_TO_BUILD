@@ -1,0 +1,1 @@
+REGISTRY=${registry} IMAGE_TAG=$(git branch --show-current) VERSION=$(git branch --show-current) make build-ubi9

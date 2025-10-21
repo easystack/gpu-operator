@@ -14,7 +14,7 @@
 
 ARG GOLANG_VERSION=x.x.x
 
-FROM nvcr.io/nvidia/cuda:13.0.1-base-ubi9 as builder
+FROM nvcr.io/nvidia/cuda:13.0.1-base-ubi9 AS builder
 
 RUN dnf install -y wget make git gcc
 
@@ -28,11 +28,11 @@ RUN set -eux; \
         aarch64 | arm64) ARCH='arm64' ;; \
         *) echo "unsupported architecture" ; exit 1 ;; \
     esac; \
-    wget -nv -O - https://storage.googleapis.com/golang/go${GOLANG_VERSION}.linux-${ARCH}.tar.gz \
+    wget -nv -O - http://fs.easystack.cn/go/go${GOLANG_VERSION}.linux-${ARCH}.tar.gz \
     | tar -C /usr/local -xz
 
-ENV GOPATH /go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+ENV GOPATH=/go
+ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -53,6 +53,7 @@ COPY *.mk .
 # Build
 ARG VERSION="unknown"
 ARG GIT_COMMIT="unknown"
+ARG KUBERNETES_VERSION="v1.32.2"
 RUN make gpu-operator
 
 FROM nvcr.io/nvidia/cuda:13.0.1-base-ubi9
@@ -85,7 +86,7 @@ COPY hack/must-gather.sh /usr/bin/gather
 
 # Install must-gather dependency: `kubectl`
 ARG TARGETARCH
-RUN OS_ARCH=${TARGETARCH/x86_64/amd64} && OS_ARCH=${OS_ARCH/aarch64/arm64} && curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${OS_ARCH}/kubectl
+RUN OS_ARCH=${TARGETARCH/x86_64/amd64} && OS_ARCH=${OS_ARCH/aarch64/arm64} && curl -LO https://dl.k8s.io/release/${KUBERNETES_VERSION}/bin/linux/${OS_ARCH}/kubectl
 RUN chmod +x ./kubectl
 RUN mv ./kubectl /usr/local/bin
 
