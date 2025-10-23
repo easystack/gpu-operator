@@ -28,6 +28,7 @@ import (
 
 	secv1 "github.com/openshift/api/security/v1"
 	promv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -1082,4 +1083,77 @@ func TestGetSanitizedKernelVersion(t *testing.T) {
 		require.NotEmpty(t, result)
 		require.Equal(t, test.expected, result)
 	}
+}
+
+func TestTransformForKubeletRoot(t *testing.T) {
+	volumeName := "pod-gpu-resources"
+
+	daemonSet1 := &appsv1.DaemonSet{
+		Spec: appsv1.DaemonSetSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Volumes: []corev1.Volume{
+						{
+							Name: volumeName,
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "{{ .KubeletRoot }}/pod-resources",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	daemonSet2 := &appsv1.DaemonSet{
+		Spec: appsv1.DaemonSetSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Volumes: []corev1.Volume{
+						{
+							Name: volumeName,
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "{{ .Kubeletroot }}/pod-resources",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	daemonSet3 := &appsv1.DaemonSet{
+		Spec: appsv1.DaemonSetSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Volumes: []corev1.Volume{
+						{
+							Name: volumeName,
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "/kubelet/pod-resources",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	hostPathsSpec := &gpuv1.HostPathsSpec{
+		KubeletRoot: "/kubelet-test",
+	}
+
+	transformForKubeletRoot(daemonSet1, hostPathsSpec)
+	transformForKubeletRoot(daemonSet2, hostPathsSpec)
+	transformForKubeletRoot(daemonSet3, hostPathsSpec)
+
+	assert.Equal(t, daemonSet1.Spec.Template.Spec.Volumes[0].HostPath.Path, "/kubelet-test/pod-resources")
+	assert.Equal(t, daemonSet2.Spec.Template.Spec.Volumes[0].HostPath.Path, "/var/lib/kubelet/pod-resources")
+	assert.Equal(t, daemonSet3.Spec.Template.Spec.Volumes[0].HostPath.Path, "/kubelet/pod-resources")
 }

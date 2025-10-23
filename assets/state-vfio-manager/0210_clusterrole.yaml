@@ -33,3 +33,9 @@ rules:
   - pods/eviction
   verbs:
   - create
+- apiGroups:
+  - nfd.k8s-sigs.io
+  resources:
+  - nodefeaturerules
+  verbs:
+  - '*'

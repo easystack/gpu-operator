@@ -68,6 +68,7 @@ const (
 	//     --> ClusterServiceVersion.metadata.annotations.operatorframework.io/suggested-namespace
 	ocpSuggestedNamespace          = "nvidia-gpu-operator"
 	gpuWorkloadConfigLabelKey      = "nvidia.com/gpu.workload.config"
+	gpuWorkloadConfigNone          = "none"
 	gpuWorkloadConfigContainer     = "container"
 	gpuWorkloadConfigVMPassthrough = "vm-passthrough"
 	gpuWorkloadConfigVMVgpu        = "vm-vgpu"
@@ -79,11 +80,14 @@ const (
 )
 
 var (
-	defaultGPUWorkloadConfig = gpuWorkloadConfigContainer
+	defaultGPUWorkloadConfig = gpuWorkloadConfigNone
 	podSecurityModes         = []string{"enforce", "audit", "warn"}
 )
 
 var gpuStateLabels = map[string]map[string]string{
+	gpuWorkloadConfigNone: {
+		commonOperandsLabelKey: "false",
+	},
 	gpuWorkloadConfigContainer: {
 		"nvidia.com/gpu.deploy.driver":                "true",
 		"nvidia.com/gpu.deploy.gpu-feature-discovery": "true",
@@ -327,9 +331,6 @@ func isValidWorkloadConfig(workloadConfig string) bool {
 // If an error occurs when searching for the workload config,
 // return defaultGPUWorkloadConfig.
 func getWorkloadConfig(labels map[string]string, sandboxEnabled bool) (string, error) {
-	if !sandboxEnabled {
-		return gpuWorkloadConfigContainer, nil
-	}
 	if workloadConfig, ok := labels[gpuWorkloadConfigLabelKey]; ok {
 		if isValidWorkloadConfig(workloadConfig) {
 			return workloadConfig, nil
@@ -343,7 +344,10 @@ func getWorkloadConfig(labels map[string]string, sandboxEnabled bool) (string, e
 // removeAllGPUStateLabels returns true if the labels map has been modified.
 func removeAllGPUStateLabels(labels map[string]string) bool {
 	modified := false
-	for _, labelsMap := range gpuStateLabels {
+	for k, labelsMap := range gpuStateLabels {
+		if k == gpuWorkloadConfigNone {
+			continue
+		}
 		for key := range labelsMap {
 			if _, ok := labels[key]; ok {
 				delete(labels, key)
